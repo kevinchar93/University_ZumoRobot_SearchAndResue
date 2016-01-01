@@ -99,7 +99,7 @@ float Utilities::clip(float a)
     return a;
 }
 
-int Utilities::min(int a, int b)
+int Utilities::uMin(int a, int b)
 {
     if (a < b) {
         return a;
@@ -109,7 +109,7 @@ int Utilities::min(int a, int b)
     }
 }
 
-int Utilities::max(int a, int b)
+int Utilities::uMax(int a, int b)
 {
     if (a > b) {
         return a;

@@ -31,7 +31,7 @@
  */
 
 /*  Utilities.h
- *	
+ *
  *  A class that includes a variety of useful "number - related"
  *  operations.
  */
@@ -49,8 +49,8 @@ public:
     static bool inRange(float value, float lowerBound, float upperBound);
     static int clip(int input);
     static float clip(float input);
-    static int min(int a, int b);
-    static int max(int a, int b);
+    static int uMin(int a, int b);
+    static int uMax(int a, int b);
     static float toDegrees(float angle);
 
     struct MotorInfo {
@@ -62,4 +62,3 @@ public:
 private:
 };
 #endif
-

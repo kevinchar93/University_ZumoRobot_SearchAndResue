@@ -33,7 +33,6 @@
 #ifndef IMUManager_h
 #define IMUManager_h
 
-#include <Energia.h>
 #include "LSM303.h"
 #include "L3G.h"
 #include "Utilities.h"
@@ -73,14 +72,14 @@ public:
     static float getMagX();
     static float getMagY();
     static float getMagZ();
-    
+
     static void zeroGyroXAxis();
     static void zeroGyroYAxis();
     static void zeroGyroZAxis();
 
     static float getTiltAngle();
-    static float getFilteredTiltAngle(); 
-    
+    static float getFilteredTiltAngle();
+
     /* raw acceleration values as measured by the accelerometer */
     static int accel_x;
     static int accel_y;
@@ -113,14 +112,14 @@ private:
     static int gyro_x_offset;
     static int gyro_y_offset;
     static int gyro_z_offset;
-    
+
     static float avg_gyro_z_zero_offset;
     static float avg_gyro_y_zero_offset;
     static float avg_gyro_x_zero_offset;
 
     static float tuningFactor_gyro;
     static float filteredAngle_gyro;
-    
+
     /* accelerometer variables */
     static float accel_x_offset;
     static float accel_y_offset;
@@ -134,16 +133,16 @@ private:
     static LSM303::vector<int16_t> mag_max;
 
     /* constants: based on the default setup */
-    const static float GYRO_CONVERSION_FACTOR = (8.75f / 1000.0f);   /* deg/s */
-    const static float ACCEL_CONVERSION_FACTOR = (0.061f / 1000.0f); /* g */
-    const static float MAG_CONVERSION_FACTOR = (0.160f / 1000.0f);   /* gauss */
+    static const float GYRO_CONVERSION_FACTOR;   /* deg/s */
+    static const float ACCEL_CONVERSION_FACTOR; /* g */
+    static const float MAG_CONVERSION_FACTOR;   /* gauss */
 
-    // const static float GYRO_SAMPLING_RATE 
-    // const static float ACCEL_SAMPLING_RATE 
-    // const static float MAG_SAMPLING_RATE 
-    
-    const static float COMPLEMENTARY_FILTER_WEIGHT = 0.95f;
-    const static int MAG_CALIBRATION_THRESHOLD = 9000;
+    // const static float GYRO_SAMPLING_RATE
+    // const static float ACCEL_SAMPLING_RATE
+    // const static float MAG_SAMPLING_RATE
+
+    static const float COMPLEMENTARY_FILTER_WEIGHT;
+    static const int MAG_CALIBRATION_THRESHOLD;
 
 };
 #endif

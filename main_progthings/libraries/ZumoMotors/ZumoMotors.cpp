@@ -1,25 +1,13 @@
-#include <Energia.h>
-
 #include "ZumoMotors.h"
 
-#define REDBEAR 1
-
-#ifdef REDBEAR
-// redbear cc3200 (PWM only available on pins 5 and 6)
-#define PWM_L 6
-#define PWM_R 5 
-#else
 #define PWM_L 10
 #define PWM_R 9
-#endif
-
 #define DIR_L 8
 #define DIR_R 7
 
 #if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328P__) || defined (__AVR_ATmega32U4__)
   #define USE_20KHZ_PWM
 #endif
-#undef USE_20KHZ_PWM // redbear cc3200 (need portable, non-AVR, code)
 
 static boolean flipLeft = false;
 static boolean flipRight = false;
@@ -36,13 +24,6 @@ void ZumoMotors::init2()
   pinMode(PWM_R,  OUTPUT);
   pinMode(DIR_L, OUTPUT);
   pinMode(DIR_R, OUTPUT);
-#ifdef REDBEAR
-  /* redbear pins 5 & 6 are connected to pins 9 & 10, so we these to be input
-   * so they don't inadvertently drive
-   */
-  pinMode(10, INPUT);    
-  pinMode(9, INPUT);
-#endif
 
 #ifdef USE_20KHZ_PWM
   // Timer 1 configuration
@@ -75,6 +56,7 @@ void ZumoMotors::flipRightMotor(boolean flip)
 void ZumoMotors::setLeftSpeed(int speed)
 {
   init(); // initialize if necessary
+    
   boolean reverse = 0;
   
   if (speed < 0)
@@ -129,10 +111,4 @@ void ZumoMotors::setSpeeds(int leftSpeed, int rightSpeed)
 {
   setLeftSpeed(leftSpeed);
   setRightSpeed(rightSpeed);
-}
-
-void ZumoMotors::setNormalizedSpeeds(float leftSpeed, float rightSpeed)
-{
-  setLeftSpeed((int)leftSpeed * 400);
-  setRightSpeed((int)rightSpeed * 400);
 }

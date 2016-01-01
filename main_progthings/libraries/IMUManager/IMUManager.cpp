@@ -74,8 +74,17 @@ int IMUManager::mag_x = 0;
 int IMUManager::mag_y = 0;
 int IMUManager::mag_z = 0;
 
+/* constants: based on the default setup */
+const float IMUManager::GYRO_CONVERSION_FACTOR = (8.75f / 1000.0f);   /* deg/s */
+const float IMUManager::ACCEL_CONVERSION_FACTOR = (0.061f / 1000.0f); /* g */
+const float IMUManager::MAG_CONVERSION_FACTOR = (0.160f / 1000.0f);   /* gauss */
+
+
+const float IMUManager::COMPLEMENTARY_FILTER_WEIGHT = 0.95f;
+const int IMUManager::MAG_CALIBRATION_THRESHOLD = 9000;
+
 /* initialize the minimum values to the highest possible values
- * and the maximum values to the lowest possible values so that 
+ * and the maximum values to the lowest possible values so that
  * their initial values will form a upper and lower bound for calibration
  */
 LSM303::vector<int16_t> IMUManager::mag_min = {32767, 32767, 32767};
@@ -169,8 +178,8 @@ void IMUManager::readMag()
  * ======== calibrateGyro ========
  * Calculate and offset error for each of the gyro's axes
  *
- * Sums the gyro readings over a period of time and averages 
- * them to identify a stationary offset to be subtracted 
+ * Sums the gyro readings over a period of time and averages
+ * them to identify a stationary offset to be subtracted
  * from the raw gyro values. Assumes that there is no angular
  * rotation during the calibration period.
  */
@@ -217,9 +226,9 @@ void IMUManager::calibrateGyro(int numSeconds)
  * ======== calibrateAccelerometer ========
  * Calculate and offset error for each of the accelerometer's axes
  *
- * Sums the accelerometer readings over a period of time and averages 
- * them to identify a stationary offset to be subtracted from the 
- * raw accelerometer values. Assumes that the X and Y accelerations 
+ * Sums the accelerometer readings over a period of time and averages
+ * them to identify a stationary offset to be subtracted from the
+ * raw accelerometer values. Assumes that the X and Y accelerations
  * are zero and the Z acceleration is 1 g during the calibration
  * period.
  */
@@ -271,7 +280,7 @@ void IMUManager::calibrateAccelerometer(int numSeconds)
  * Track magnetometer data to adjust for inherent bias/error
  *
  * Finds the max and min values for each the magnetometer's axis
- * readings in order to normalize the raw measurements from -1.0 
+ * readings in order to normalize the raw measurements from -1.0
  * to 1.0. Run this method while rotating the zumo in all three
  * rotational degrees of freedom (roll, pitch yaw).
  *
@@ -288,14 +297,14 @@ void IMUManager::calibrateMagnetometer(int numSamples)
         accel.readMag();
 
         /* if new value is lower than min, update the min */
-        mag_min.x = util.min(mag_min.x, accel.m.x);
-        mag_min.y = util.min(mag_min.y, accel.m.y);
-        mag_min.z = util.min(mag_min.z, accel.m.z);
+        mag_min.x = util.uMin(mag_min.x, accel.m.x);
+        mag_min.y = util.uMin(mag_min.y, accel.m.y);
+        mag_min.z = util.uMin(mag_min.z, accel.m.z);
 
         /* if new value is higher than max, update the max */
-        mag_max.x = util.max(mag_max.x, accel.m.x);
-        mag_max.y = util.max(mag_max.y, accel.m.y);
-        mag_max.z = util.max(mag_max.z, accel.m.z);
+        mag_max.x = util.uMax(mag_max.x, accel.m.x);
+        mag_max.y = util.uMax(mag_max.y, accel.m.y);
+        mag_max.z = util.uMax(mag_max.z, accel.m.z);
 
         currentSumDifferences = (mag_max.x-mag_min.x)+(mag_max.y-mag_min.y)+(mag_max.z-mag_min.z);
 
@@ -310,7 +319,7 @@ void IMUManager::calibrateMagnetometer(int numSamples)
     Serial.print("max.x   ");
     Serial.print(mag_max.x);
     Serial.println();
-    
+
     if (mag_max.y == mag_min.y) mag_max.y = mag_min.y + 1;
     Serial.print("min.y   ");
     Serial.print(mag_min.y);
@@ -369,7 +378,7 @@ float IMUManager::getGyroYaw()
     return util.wrapAngle(zAngle_gyro - zReferenceAngle_gyro);
 }
 
-/* return the gyro's abolute heading angle at the current angle 
+/* return the gyro's abolute heading angle at the current angle
    along the X, Y and Z axis */
 void IMUManager::zeroGyroXAxis()
 {
@@ -443,13 +452,7 @@ float IMUManager::getTiltAngle()
  */
 float IMUManager::getFilteredTiltAngle()
 {
-    filteredAngle_gyro = (COMPLEMENTARY_FILTER_WEIGHT * (filteredAngle_gyro + getGyroY()*0.0050)) 
+    filteredAngle_gyro = (COMPLEMENTARY_FILTER_WEIGHT * (filteredAngle_gyro + getGyroY()*0.0050))
                          + ((1-COMPLEMENTARY_FILTER_WEIGHT) * getTiltAngle());
     return filteredAngle_gyro;
 }
-
-
-
-
-
-
