@@ -3,34 +3,85 @@
 #include <Pushbutton.h>
 #include <ZumoReflectanceSensorArray.h>
 #include <ZumoMotors.h>
+#include <Wire.h>
+#include <IMUManager.h>
+
+#define CALIBRATE_TIME 5000
+#define TOP_SPEED 200
+#define NUM_SENSORS 6
 
 ZumoBuzzer buzzer;
 ZumoReflectanceSensorArray sensorArray;
 ZumoMotors motors;
 Pushbutton button(ZUMO_BUTTON);
 
-#define CALIBRATE_TIME 5000
-#define TOP_SPEED 200
-#define NUM_SENSORS 6
-#define TOP_POINT 5000
-#define MID_POINT 2500
-#define MID_POINT_UPPER 2700
-#define MID_POINT_BOTTOM 2200
+IMUManager imu;
+bool zeroGyro = false;
+bool gyroInZeroMode = true;
 
-#define PROPORTION_CONST 4
-#define INTEGRAL_CONST 2000
-#define DERIVATVE_CONST 6
 
-boolean keepLooping = false;
-unsigned long beginTime = 0;
-int spinSpeed = 220;
-unsigned int position = 0;
 unsigned int sensorVals[NUM_SENSORS];
-int leftSpeed = 0;
-int rightSpeed = 0;
 
 void setup()
 {
+    Serial.begin(9600);
+    Serial.println("sensor init phase");
+
+    Wire.begin();
+    imu = IMUManager();
+
+    /* initialize Zumo accelerometer and magnetometer */
+    imu.initAccel();
+    imu.enableAccelDefault();
+
+    /* initialize Zumo gyro */
+    if (!imu.initGyro()) {
+        Serial.print("Failed to autodetect gyro type!");
+        delay(1000);
+    }
+    imu.enableGyroDefault();
+
+    Serial.println("Calibrating gyro for 2 seconds: keep zumo still during calibration period");
+    gyroInZeroMode = true;
+    imu.calibrateGyro(2);
+    imu.zeroGyroXAxis();
+    imu.zeroGyroYAxis();
+    imu.zeroGyroZAxis();
+    gyroInZeroMode = false;
+
+    Serial.println("sensorSetup done.");
+
+}
+
+void loop()
+{
+    int imuCount = 0;
+
+    /* update IMU data every 5 ms (200 Hz) */
+
+    if (zeroGyro) {
+        imu.calibrateGyro(1);
+        imu.zeroGyroXAxis();
+        imu.zeroGyroYAxis();
+        imu.zeroGyroZAxis();
+        zeroGyro = false;
+    }
+
+    /* read data from all IMU sensors */
+    imu.readGyro();
+
+    float currHeading = IMUManager::getGyroYaw();
+
+    Serial.println(currHeading);
+}
+
+/*
+void calibrateSensorArray ()
+{
+    boolean keepLooping = false;
+    unsigned long beginTime = 0;
+    int spinSpeed = 220;
+    unsigned int position = 0;
 
     // innit the sensor array
     sensorArray.init();
@@ -68,44 +119,7 @@ void setup()
     delay(1000);
 }
 
-int proportional = 0;
-int last_proportional = 0;
-int derivative = 0;
-int pow_diff = 0;
-int integral = 0;
-
-void loop()
-{
-    position = sensorArray.readLine(sensorVals);
-
-    proportional = ((int)position) - 2500;
-    derivative = proportional - last_proportional;
-    integral += proportional;
-
-    last_proportional = proportional;
-
-    pow_diff = proportional/PROPORTION_CONST + integral/INTEGRAL_CONST + derivative*DERIVATVE_CONST;
-
-    if (pow_diff > TOP_SPEED)
-    {
-        pow_diff = TOP_SPEED;
-    }
-
-    if (pow_diff < -TOP_SPEED)
-    {
-        pow_diff = -TOP_SPEED;
-    }
-
-    if (pow_diff < 0)
-    {
-        move(motors, TOP_SPEED+pow_diff, TOP_SPEED, 1 ,0);
-    }
-    else
-    {
-        move(motors, TOP_SPEED, TOP_SPEED - pow_diff, 1, 0);
-    }
-}
-
+/*
 int calcLeftSpeed (int pos, int max)
 {
     if (pos >= MID_POINT)
@@ -131,7 +145,7 @@ int calcRightSpeed (int pos, int max)
         return (int) (mul * max);
     }
 }
-
+*/
 void move(ZumoMotors zm, int leftSpeed, int rightSpeed,
                 unsigned int times, unsigned int wait) {
     for (int i = 0; i < times; i++){
