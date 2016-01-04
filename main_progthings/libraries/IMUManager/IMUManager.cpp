@@ -200,6 +200,7 @@ void IMUManager::calibrateGyro(int numSeconds)
         delay(2);
     } while (((millis() - startTime) / 1000.0) < numSeconds);
 
+/*
     Serial.print("Over a period of ");
     Serial.print(numSeconds);
     Serial.print(" seconds, gyro drifted ");
@@ -209,17 +210,19 @@ void IMUManager::calibrateGyro(int numSeconds)
     Serial.print(" around the y-axis and ");
     Serial.print(sumZ);
     Serial.println(" around the z-axis");
-
+*/
     gyro_x_offset = (int)(sumX / (float)(count) + 0.5f);
     gyro_y_offset = (int)(sumY / (float)(count) + 0.5f);
     gyro_z_offset = (int)(sumZ / (float)(count) + 0.5f);
 
+/*
     Serial.print("X Zero offset: ");
     Serial.println(gyro_x_offset);
     Serial.print("Y Zero offset: ");
     Serial.println(gyro_y_offset);
     Serial.print("Z Zero offset: ");
     Serial.println(gyro_z_offset);
+    */
 }
 
 /*
@@ -263,12 +266,14 @@ void IMUManager::calibrateAccelerometer(int numSeconds)
                 accel_x_offset = -((float) (sumXReadings / (float) (count)));
                 accel_z_offset = -(((float) (sumZReadings) / (float) (count))
                         - 1.0f);
+                        /*
                 Serial.print("Accelerometer X offset: ");
                 Serial.print(accel_x_offset);
                 Serial.print(" g's, Y offset: ");
                 Serial.print(accel_y_offset);
                 Serial.print(" g's, Z offset: ");
                 Serial.print(accel_z_offset);
+                */
             }
         }
         initCalibrationTime_accel = 0;
@@ -313,28 +318,29 @@ void IMUManager::calibrateMagnetometer(int numSamples)
     }
 
     if (mag_max.x == mag_min.x) mag_max.x = mag_min.x + 1;
+    /*
     Serial.print("min.x   ");
     Serial.print(mag_min.x);
     Serial.println();
     Serial.print("max.x   ");
     Serial.print(mag_max.x);
-    Serial.println();
+    Serial.println(); */
 
     if (mag_max.y == mag_min.y) mag_max.y = mag_min.y + 1;
-    Serial.print("min.y   ");
+    /*Serial.print("min.y   ");
     Serial.print(mag_min.y);
     Serial.println();
     Serial.print("max.y   ");
     Serial.print(mag_max.y);
-    Serial.println();
+    Serial.println();*/
 
     if (mag_max.z == mag_min.z) mag_max.z = mag_min.z + 1;
-    Serial.print("min.z   ");
+    /*Serial.print("min.z   ");
     Serial.print(mag_min.z);
     Serial.println();
     Serial.print("max.z   ");
     Serial.print(mag_max.z);
-    Serial.println();
+    Serial.println();*/
 
     /* Set calibrated values to accel.m_max and accel.m_min */
     accel.m_max.x = mag_max.x;

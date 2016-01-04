@@ -5,74 +5,55 @@
 #include <ZumoMotors.h>
 #include <Wire.h>
 #include <IMUManager.h>
+#include <Utilities.h>
 
-#define CALIBRATE_TIME 5000
-#define TOP_SPEED 200
 #define NUM_SENSORS 6
 
-ZumoBuzzer buzzer;
+//#define SOUND_IMU_INNIT "! V10 cdefgab>cbagfedc"
+#define READY_TO_MOVE "L16 cdegreg4"
+#define SOUND_IMU_INNIT "L16 ccdeced4"
+#define SOUND_BUTTON_CLICK ">g32>>c32>e32>>d32"
+
 ZumoReflectanceSensorArray sensorArray;
 ZumoMotors motors;
-Pushbutton button(ZUMO_BUTTON);
+
 
 IMUManager imu;
 bool zeroGyro = false;
-bool gyroInZeroMode = true;
-
 
 unsigned int sensorVals[NUM_SENSORS];
 
 void setup()
 {
     Serial.begin(9600);
-    Serial.println("sensor init phase");
 
     Wire.begin();
-    imu = IMUManager();
-
-    /* initialize Zumo accelerometer and magnetometer */
-    imu.initAccel();
-    imu.enableAccelDefault();
-
-    /* initialize Zumo gyro */
-    if (!imu.initGyro()) {
-        Serial.print("Failed to autodetect gyro type!");
-        delay(1000);
-    }
-    imu.enableGyroDefault();
-
-    Serial.println("Calibrating gyro for 2 seconds: keep zumo still during calibration period");
-    gyroInZeroMode = true;
-    imu.calibrateGyro(2);
-    imu.zeroGyroXAxis();
-    imu.zeroGyroYAxis();
-    imu.zeroGyroZAxis();
-    gyroInZeroMode = false;
-
-    Serial.println("sensorSetup done.");
-
+    waitForButtonPushBuzz(2000, SOUND_IMU_INNIT);
+    initImuGyro(imu);
 }
 
 void loop()
 {
-    int imuCount = 0;
 
-    /* update IMU data every 5 ms (200 Hz) */
 
-    if (zeroGyro) {
-        imu.calibrateGyro(1);
-        imu.zeroGyroXAxis();
-        imu.zeroGyroYAxis();
-        imu.zeroGyroZAxis();
-        zeroGyro = false;
-    }
+    waitForButtonPushBuzz(1500, READY_TO_MOVE);
+    rotateToAngle(imu, -90.0, motors);
+    delay(2000);
 
-    /* read data from all IMU sensors */
-    imu.readGyro();
+}
 
-    float currHeading = IMUManager::getGyroYaw();
+void waitForButtonPushBuzz(int delayTime, const char* sound)
+{
+    Pushbutton button(ZUMO_BUTTON);
+    ZumoBuzzer buzzer;
 
-    Serial.println(currHeading);
+    //buzzer.play("! V10 cdefgab>cbagfedc");
+    buzzer.play(sound);
+    button.waitForButton();
+
+    //buzzer.play(">g32>>c32>e32>>d32");
+    buzzer.play(SOUND_BUTTON_CLICK);
+    delay(delayTime);
 }
 
 /*
