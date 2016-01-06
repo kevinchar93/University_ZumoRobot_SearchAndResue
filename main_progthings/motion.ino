@@ -11,7 +11,8 @@
 #define UP_BOUND_ROT 1.0
 #define LOW_BOUND_ROT -1.0
 
-#define TOP_SPEED 150
+#define TOP_SPEED 180
+#define MIN_SPEED 10
 
 
 void rotateToAngle(IMUManager _imu, float _angle, ZumoMotors _motors)
@@ -39,6 +40,10 @@ void rotateToAngle(IMUManager _imu, float _angle, ZumoMotors _motors)
         if (motorSpeed > TOP_SPEED)
         {
             motorSpeed = TOP_SPEED;
+        }
+        else if (motorSpeed < MIN_SPEED)
+        {
+            motorSpeed = 0;
         }
 
         if (error > 0)

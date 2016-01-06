@@ -36,9 +36,10 @@ void loop()
 {
 
 
-    waitForButtonPushBuzz(1500, READY_TO_MOVE);
+    waitForButtonPushBuzz(1000, READY_TO_MOVE);
     rotateToAngle(imu, -90.0, motors);
-    delay(2000);
+    waitForButtonPushBuzz(1000, READY_TO_MOVE);
+    rotateToAngle(imu, 90.0, motors);
 
 }
 
