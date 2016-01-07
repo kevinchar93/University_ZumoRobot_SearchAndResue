@@ -11,24 +11,25 @@
 #define UP_BOUND_ROT 1.0
 #define LOW_BOUND_ROT -1.0
 
-#define TOP_SPEED 180
-#define MIN_SPEED 10
+#define TOP_SPEED 150
+#define MIN_SPEED 0
 
 
-void rotateToAngle(IMUManager _imu, float _angle, ZumoMotors _motors)
+void rotateToAngle(TurnSensor trn, float angle, ZumoMotors motors)
 {
     PIDController rotationPID = PIDController((float) 6.5, (float) 0.001, (float) 0.0);
     float error, motorSpeed, targetAngle, currentHeading;
     bool keepLooping = true;
 
-    _imu.readGyro();
-    currentHeading = IMUManager::getGyroYaw();
-    targetAngle = Utilities::wrapAngle(currentHeading + _angle);
+    trn.reset();
+    trn.update();
+    currentHeading = trn.getCurrentHeading();
+    targetAngle = Utilities::wrapAngle(currentHeading + angle);
 
     while (keepLooping)
     {
-        _imu.readGyro();
-        error = Utilities::wrapAngle(IMUManager::getGyroYaw() - targetAngle);
+        trn.update();
+        error = Utilities::wrapAngle( trn.getCurrentHeading() - targetAngle);
         motorSpeed = rotationPID.calculate(fabs(error));
         keepLooping = !(Utilities::inRange(fabs(error), LOW_BOUND_ROT, UP_BOUND_ROT));
 
@@ -41,20 +42,20 @@ void rotateToAngle(IMUManager _imu, float _angle, ZumoMotors _motors)
         {
             motorSpeed = TOP_SPEED;
         }
-        else if (motorSpeed < MIN_SPEED)
-        {
-            motorSpeed = 0;
-        }
+        // else if (motorSpeed < MIN_SPEED)
+        // {
+        //     motorSpeed = 0;
+        // }
 
         if (error > 0)
         {
                             // left speed, right speed
-            _motors.setSpeeds(motorSpeed, -motorSpeed);
+            motors.setSpeeds(motorSpeed, -motorSpeed);
         }
         else
         {
                             // left speed, right speed
-            _motors.setSpeeds(-motorSpeed, motorSpeed);
+            motors.setSpeeds(-motorSpeed, motorSpeed);
         }
     }
 }

@@ -6,6 +6,7 @@
 #include <Wire.h>
 #include <IMUManager.h>
 #include <Utilities.h>
+#include <TurnSensor.h>
 
 #define NUM_SENSORS 6
 
@@ -17,8 +18,7 @@
 ZumoReflectanceSensorArray sensorArray;
 ZumoMotors motors;
 
-
-IMUManager imu;
+TurnSensor turner(Serial);
 bool zeroGyro = false;
 
 unsigned int sensorVals[NUM_SENSORS];
@@ -27,19 +27,24 @@ void setup()
 {
     Serial.begin(9600);
 
-    Wire.begin();
     waitForButtonPushBuzz(2000, SOUND_IMU_INNIT);
-    initImuGyro(imu);
+    turner.init();
 }
 
 void loop()
 {
+    waitForButtonPushBuzz(3000, READY_TO_MOVE);
 
-
-    waitForButtonPushBuzz(1000, READY_TO_MOVE);
-    rotateToAngle(imu, -90.0, motors);
-    waitForButtonPushBuzz(1000, READY_TO_MOVE);
-    rotateToAngle(imu, 90.0, motors);
+    while (true) {
+    rotateToAngle(turner, -90.0, motors);
+    delay(100);
+    rotateToAngle(turner, 90.0, motors);
+    delay(100);
+    rotateToAngle(turner, 90.0, motors);
+    delay(100);
+    rotateToAngle(turner, -90.0, motors);
+    delay(100);
+}
 
 }
 
@@ -128,24 +133,3 @@ int calcRightSpeed (int pos, int max)
     }
 }
 */
-void move(ZumoMotors zm, int leftSpeed, int rightSpeed,
-                unsigned int times, unsigned int wait) {
-    for (int i = 0; i < times; i++){
-        zm.setSpeeds(leftSpeed, rightSpeed);
-        delay(wait);
-    }
-}
-
-void moveForward(ZumoMotors zm, unsigned int speed, unsigned int times, unsigned int wait) {
-    for (int i = 0; i < times; i++){
-        zm.setSpeeds(speed, speed);
-        delay(wait);
-    }
-}
-
-void moveBackward(ZumoMotors zm, unsigned int speed, unsigned int times, unsigned int wait) {
-    for (int i = 0; i < times; i++){
-        zm.setSpeeds(-speed, -speed);
-        delay(wait);
-    }
-}
