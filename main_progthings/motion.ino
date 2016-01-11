@@ -42,10 +42,6 @@ void rotateToAngle(TurnSensor trn, float angle, ZumoMotors motors)
         {
             motorSpeed = TOP_SPEED;
         }
-        // else if (motorSpeed < MIN_SPEED)
-        // {
-        //     motorSpeed = 0;
-        // }
 
         if (error > 0)
         {
@@ -57,5 +53,45 @@ void rotateToAngle(TurnSensor trn, float angle, ZumoMotors motors)
                             // left speed, right speed
             motors.setSpeeds(-motorSpeed, motorSpeed);
         }
+    }
+}
+
+void driveStraightFor (TurnSensor trn, unsigned long durationMs)
+{
+    int16_t targetAngle, power, error, speedDifference;
+    int16_t rightSpeed, leftSpeed;
+    unsigned long initTime;
+    bool timedOut = false;
+    const int16_t straightSpeed = 150;
+    const uint16_t proportion = 12;
+    const float integral = 0.5;
+
+    trn.reset();
+    trn.update();
+    targetAngle = trn.getCurrentHeading();
+    initTime = millis();
+
+    while (!timedOut)
+    {
+        trn.update();
+        error = Utilities::wrapAngle( trn.getCurrentHeading() - targetAngle);
+        speedDifference = (error * proportion) + ((int)(error * integral));
+
+        leftSpeed = straightSpeed + speedDifference;
+        rightSpeed = straightSpeed - speedDifference;
+
+        leftSpeed = constrain(leftSpeed, 0, (int16_t)straightSpeed);
+        rightSpeed = constrain(rightSpeed, 0, (int16_t)straightSpeed);
+
+        timedOut = ((millis() - initTime) > durationMs);
+
+        if (timedOut)
+        {
+            leftSpeed = 0;
+            rightSpeed = 0;
+        }
+
+        ZumoMotors::setLeftSpeed(leftSpeed);
+        ZumoMotors::setRightSpeed(rightSpeed);
     }
 }

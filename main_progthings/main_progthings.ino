@@ -35,17 +35,23 @@ void loop()
 {
     waitForButtonPushBuzz(3000, READY_TO_MOVE);
 
-    while (true) {
-    rotateToAngle(turner, -90.0, motors);
-    delay(100);
-    rotateToAngle(turner, 90.0, motors);
-    delay(100);
-    rotateToAngle(turner, 90.0, motors);
-    delay(100);
-    rotateToAngle(turner, -90.0, motors);
-    delay(100);
-}
-
+    while (true)
+    {
+        /*
+        rotateToAngle(turner, -90.0, motors);
+        driveStraightFor(turner, 150);
+        delay(100);
+        rotateToAngle(turner, 90.0, motors);
+        delay(100);
+        rotateToAngle(turner, 90.0, motors);
+        driveStraightFor(turner, 150);
+        delay(100);
+        rotateToAngle(turner, -90.0, motors);
+        driveStraightFor(turner, 500);
+        delay(100);
+        */
+        driveStraightFor(turner, 10000);
+    }
 }
 
 void waitForButtonPushBuzz(int delayTime, const char* sound)
