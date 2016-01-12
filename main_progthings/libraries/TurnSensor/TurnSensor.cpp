@@ -50,7 +50,7 @@ void TurnSensor::init()
     if(_debugOn) {_print->println("Beginning Gyro Calibration");}
 
     // Calibrate the gyro
-    calibrate(10240);
+    calibrate(5120);
 
     if(_debugOn) {_print->println("Gyro Calibration Complete");}
 

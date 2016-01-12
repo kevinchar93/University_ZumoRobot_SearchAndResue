@@ -1,0 +1,9 @@
+typedef enum _WALL_SENSE
+{
+    WS_NIL,
+    WS_FULL_WALL,
+    WS_PARTIAL_WALL,
+    WS_NO_WALL,
+    WS_NO_WALL_AHEAD,
+    WS_WALL_AHEAD
+} WALL_SENSE;
