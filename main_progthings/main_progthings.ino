@@ -32,6 +32,7 @@ uint32_t totalWallDriveTime = 0;
 uint16_t numWallDrives = 0;
 
 unsigned int sensorValues[NUM_SENSORS];
+WALL_INFO ws;
 
 void setup()
 {
@@ -47,17 +48,20 @@ void setup()
 
 void loop()
 {
-    WALL_SENSE ws;
 
     while (true)
     {
         rotateToAngle(turner, -90.0);
-        ws = driveStraightUntilLine(turner, ws);
+        ws = driveStraightUntilLine(turner, ws, RIGHT);
+        Serial.println("--------------------");
+        Serial.println("Response: ");
+        printWallInfo(ws);
+        Serial.println("--------------------");
         delay(100);
         rotateToAngle(turner, 90.0);
         delay(100);
         rotateToAngle(turner, 90.0);
-        ws = driveStraightUntilLine(turner, ws);
+        ws = driveStraightUntilLine(turner, ws, LEFT);
         delay(100);
         rotateToAngle(turner, -90.0);
         driveStraightFor(turner, 300);

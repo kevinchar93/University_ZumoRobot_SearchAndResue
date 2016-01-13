@@ -8,7 +8,7 @@
 
 void calibrateSensorArray ()
 {
-    const int spinSpeed = 200;
+    const int spinSpeed = 150;
     sensorArray.init();
 
     for(int i = 0; i < 160; i++)
