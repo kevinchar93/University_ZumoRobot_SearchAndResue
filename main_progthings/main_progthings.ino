@@ -10,6 +10,11 @@
 
 #define NUM_SENSORS 6
 
+#define DRIVE_FORWARD_TIME 400
+#define RIGHT_TURN_90_DEG -90.0
+#define LEFT_TURN_90_DEG 90.0
+#define DELAY_TIME 100
+
 //#define SOUND_IMU_INNIT "! V10 cdefgab>cbagfedc"
 #define READY_TO_MOVE "L16 cdegreg4"
 #define SOUND_IMU_INNIT "L16 ccdeced4"
@@ -37,12 +42,16 @@ WALL_INFO ws;
 void setup()
 {
     Serial.begin(9600);
+    Serial.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
     waitForButtonPushBuzz(2000, SOUND_IMU_INNIT);
     turner.init();
 
+
     waitForButtonPushBuzz(2000, SOUND_LINE_SENSOR_INNIT);
+    Serial.println("Begin calibrateSensorArray");
     calibrateSensorArray();
+    Serial.println("Complete");
     waitForButtonPushBuzz(3000, READY_TO_MOVE);
 }
 
@@ -51,27 +60,22 @@ void loop()
 
     while (true)
     {
-        rotateToAngle(-90.0);
+        rotateToAngle(RIGHT_TURN_90_DEG);
         ws = driveStraightUntilLine(ws, RIGHT);
         Serial.println("--------------------");
         Serial.println("Response: ");
         printWallInfo(ws);
         Serial.println("--------------------");
-        delay(100);
-        rotateToAngle(90.0);
-        delay(100);
-        rotateToAngle(90.0);
+        delay(DELAY_TIME);
+        rotateToAngle(LEFT_TURN_90_DEG);
+        delay(DELAY_TIME);
+        rotateToAngle(LEFT_TURN_90_DEG);
         ws = driveStraightUntilLine(ws, LEFT);
-        delay(100);
-        rotateToAngle(-90.0);
-        driveForwardFor(400);
-        delay(100);
+        delay(DELAY_TIME);
+        rotateToAngle(RIGHT_TURN_90_DEG);
+        driveForwardFor(DRIVE_FORWARD_TIME);
+        delay(DELAY_TIME);
     }
-
-    // driveStraightUntilLine(turner);
-    // waitForButtonPushBuzz(3000, READY_TO_MOVE);
-
-
 }
 
 void waitForButtonPushBuzz(int delayTime, const char* sound)

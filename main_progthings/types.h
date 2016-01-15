@@ -23,3 +23,15 @@ typedef struct _WALL_INFO
     WALL_SENSE lastRightWall;
     WALL_SENSE lastForwardWall;
 } WALL_INFO;
+
+typedef enum _POSITION_ESTIMATE
+{
+    PE_LOST,
+    PE_CORRIDOOR,
+    PE_RIGHT_ROOM,
+    PE_LEFT_ROOM,
+    PE_RIGHT_CORNER,
+    PE_LEFT_CORNER,
+    PE_END_OF_MAZE,
+    PE_POTENTIAL_CORRIDOOR_ROOM
+} POSITION_ESTIMATE;

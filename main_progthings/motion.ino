@@ -377,13 +377,47 @@ void setWallInfo (DRIVE_DIRECTION dir, WALL_INFO* info, WALL_SENSE set)
 // For debug purposes
 void printWallInfo (WALL_INFO info)
 {
-    Serial.print("lastLeftWall: ");
-    Serial.println(info.lastLeftWall);
+    Serial.print("lastLeftWall:    ");
+    Serial.println(wallSenseToStr(info.lastLeftWall));
 
-    Serial.print("lastRightWall: ");
-    Serial.println(info.lastRightWall);
+    Serial.print("lastRightWall:    ");
+    Serial.println(wallSenseToStr(info.lastRightWall));
 
-    Serial.print("lastForwardWall: ");
-    Serial.println(info.lastForwardWall);
+    Serial.print("lastForwardWall:    ");
+    Serial.println(wallSenseToStr(info.lastForwardWall));
 
+}
+
+const char* wallSenseToStr (WALL_SENSE sense)
+{
+    switch (sense)
+    {
+        case WS_NIL:
+        return "NIL";
+        break;
+
+        case WS_FULL_WALL:
+        return "FULL WALL";
+        break;
+
+        case WS_PARTIAL_WALL:
+        return "PARTIAL WALL";
+        break;
+
+        case WS_NO_WALL:
+        return "NO WALL";
+        break;
+
+        case WS_NO_WALL_AHEAD:
+        return "NO WALL AHEAD";
+        break;
+
+        case WS_HIT_WALL:
+        return "HIT WALL";
+        break;
+
+        case WS_WALL_AHEAD:
+        return "WALL AHEAD";
+        break;
+    }
 }
