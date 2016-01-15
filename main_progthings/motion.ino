@@ -15,21 +15,21 @@
 #define MIN_SPEED 0
 
 
-void rotateToAngle(TurnSensor trn, float angle)
+void rotateToAngle(float angle)
 {
     PIDController rotationPID = PIDController((float) 6.5, (float) 0.001, (float) 0.0);
     float error, motorSpeed, targetAngle, currentHeading;
     bool keepLooping = true;
 
-    trn.reset();
-    trn.update();
-    currentHeading = trn.getCurrentHeading();
+    turner.reset();
+    turner.update();
+    currentHeading = turner.getCurrentHeading();
     targetAngle = Utilities::wrapAngle(currentHeading + angle);
 
     while (keepLooping)
     {
-        trn.update();
-        error = Utilities::wrapAngle( trn.getCurrentHeading() - targetAngle);
+        turner.update();
+        error = Utilities::wrapAngle( turner.getCurrentHeading() - targetAngle);
         motorSpeed = rotationPID.calculate(fabs(error));
         keepLooping = !(Utilities::inRange(fabs(error), LOW_BOUND_ROT, UP_BOUND_ROT));
 
@@ -56,25 +56,30 @@ void rotateToAngle(TurnSensor trn, float angle)
     }
 }
 
-void driveStraightFor (TurnSensor trn, unsigned long durationMs)
+WALL_INFO driveForwardFor (unsigned long durationMs)
 {
     int16_t targetAngle, power, error, speedDifference;
     int16_t rightSpeed, leftSpeed;
     unsigned long initTime;
+
     bool timedOut = false;
-    const int16_t straightSpeed = 130;
+    bool frontLineDetected = false;
+    bool reverseCorrectionNeeded = false;
+
+    const int16_t straightSpeed = 100;
     const uint16_t proportion = 12;
     const float integral = 0.5;
 
-    trn.reset();
-    trn.update();
-    targetAngle = trn.getCurrentHeading();
+
+    turner.reset();
+    turner.update();
+    targetAngle = turner.getCurrentHeading();
     initTime = millis();
 
     while (!timedOut)
     {
-        trn.update();
-        error = Utilities::wrapAngle( trn.getCurrentHeading() - targetAngle);
+        turner.update();
+        error = Utilities::wrapAngle( turner.getCurrentHeading() - targetAngle);
         speedDifference = (error * proportion) + ((int)(error * integral));
 
         leftSpeed = straightSpeed + speedDifference;
@@ -83,6 +88,7 @@ void driveStraightFor (TurnSensor trn, unsigned long durationMs)
         leftSpeed = constrain(leftSpeed, 0, (int16_t)straightSpeed);
         rightSpeed = constrain(rightSpeed, 0, (int16_t)straightSpeed);
 
+        // Check if we've driven for the set ammount of time
         timedOut = ((millis() - initTime) > durationMs);
 
         if (timedOut)
@@ -90,11 +96,25 @@ void driveStraightFor (TurnSensor trn, unsigned long durationMs)
             leftSpeed = 0;
             rightSpeed = 0;
         }
+
+        // Check if we've hit a line in front , if so stop the bot
+        sensorArray.readCalibrated(sensorValues);
+        frontLineDetected = ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
+                       (sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE));
+
+
+        if (frontLineDetected)
+        {
+            leftSpeed = 0;
+            rightSpeed = 0;
+            timedOut = true;
+            reverseCorrectionNeeded = true;
+        }
         ZumoMotors::setSpeeds(leftSpeed,rightSpeed);
     }
 }
 
-WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIRECTION driveDir)
+WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
     Serial.println("----------------");
     switch (driveDir)
@@ -107,7 +127,7 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
             Serial.println("Facing Right");
     }
     Serial.println("Begin driveStraightUntilLine");
-    printWallInfo(wallSense);
+    printWallInfo(wallInfo);
 
     bool wallDriveFinihsed = false;
     bool correctingFinished = false;
@@ -116,7 +136,7 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
     uint32_t initCorrectionTime = 0;
     uint32_t initWallDriveTime = 0;
     uint16_t diffTime = 0;
-    WALL_INFO response = wallSense;
+    WALL_INFO response = wallInfo;
 
 
     /* Simply we keep going forward here, until we hit a wall or timeout compared
@@ -145,9 +165,9 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
 
             // If there was no opposite wall on the other side of the corridor we do not want to
             // add the time it took to get back to the other wall, this would mess up our averages!
-            if ((wallSense.lastRightWall != WS_NO_WALL) && (wallSense.lastLeftWall != WS_NO_WALL))
+            if ((wallInfo.lastRightWall != WS_NO_WALL) && (wallInfo.lastLeftWall != WS_NO_WALL))
             {
-                Serial.println("calculate avarage");
+                // Serial.println("calculate avarage");
                 diffTime = millis() - initWallDriveTime;
                 totalWallDriveTime += diffTime;
                 numWallDrives++;
@@ -160,8 +180,8 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
         }
         // if the last time we were at this side of the corridor we sensed a partial wall
         // or no wall at all, initiate a time out so we don't drive off into free space forever
-        else if (((driveDir == LEFT && (wallSense.lastLeftWall == WS_PARTIAL_WALL || wallSense.lastLeftWall == WS_NO_WALL)) ||
-                 (driveDir == RIGHT && (wallSense.lastRightWall == WS_PARTIAL_WALL || wallSense.lastRightWall == WS_NO_WALL))) &&
+        else if (((driveDir == LEFT && (wallInfo.lastLeftWall == WS_PARTIAL_WALL || wallInfo.lastLeftWall == WS_NO_WALL)) ||
+                 (driveDir == RIGHT && (wallInfo.lastRightWall == WS_PARTIAL_WALL || wallInfo.lastRightWall == WS_NO_WALL))) &&
                  (numWallDrives > 5))
         {
             if ((millis() - initWallDriveTime) > (averageWallDriveTime * 2.5))
@@ -188,7 +208,7 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
     if (!correctingFinished)
     {
         Serial.println("Performing corrections line");
-        response = performCorrections(wallSense, driveDir);
+        response = performCorrections(wallInfo, driveDir);
         Serial.println("Corrections complete");
     }
 
@@ -205,7 +225,7 @@ WALL_INFO driveStraightUntilLine (TurnSensor trn, WALL_INFO wallSense, DRIVE_DIR
 
    It make use of prior information about the robots last movement to evaluate what to do
    */
-WALL_INFO performCorrections (WALL_INFO wallSense, DRIVE_DIRECTION driveDir)
+WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
     Serial.println("Begin performCorrections");
 
@@ -214,7 +234,7 @@ WALL_INFO performCorrections (WALL_INFO wallSense, DRIVE_DIRECTION driveDir)
     uint16_t rSpeed = 50;
     uint32_t initCorrectionTime = 0;
     uint16_t diffTime = 0;
-    WALL_INFO response = wallSense;
+    WALL_INFO response = wallInfo;
 
     initCorrectionTime = millis();
     while (!correctingFinished)
@@ -284,16 +304,16 @@ WALL_INFO performCorrections (WALL_INFO wallSense, DRIVE_DIRECTION driveDir)
            we need as long as it takes to perfrom any corrective movements to eliminate any movement
            errors, so don't check to see if the correction has timeed out compared to the average
            correction time */
-        if ((driveDir == LEFT) && (wallSense.lastRightWall == WS_NO_WALL))
+        if ((driveDir == LEFT) && (wallInfo.lastRightWall == WS_NO_WALL))
             timeOutCheck = false;
 
-        if ((driveDir == RIGHT) && (wallSense.lastLeftWall == WS_NO_WALL))
+        if ((driveDir == RIGHT) && (wallInfo.lastLeftWall == WS_NO_WALL))
             timeOutCheck = false;
 
-        if ((driveDir == LEFT) && (wallSense.lastRightWall == WS_PARTIAL_WALL))
+        if ((driveDir == LEFT) && (wallInfo.lastRightWall == WS_PARTIAL_WALL))
             timeOutCheck = false;
 
-        if ((driveDir == RIGHT) && (wallSense.lastLeftWall == WS_PARTIAL_WALL))
+        if ((driveDir == RIGHT) && (wallInfo.lastLeftWall == WS_PARTIAL_WALL))
             timeOutCheck = false;
 
         if (timeOutCheck)

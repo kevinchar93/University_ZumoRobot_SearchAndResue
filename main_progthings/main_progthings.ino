@@ -51,20 +51,20 @@ void loop()
 
     while (true)
     {
-        rotateToAngle(turner, -90.0);
-        ws = driveStraightUntilLine(turner, ws, RIGHT);
+        rotateToAngle(-90.0);
+        ws = driveStraightUntilLine(ws, RIGHT);
         Serial.println("--------------------");
         Serial.println("Response: ");
         printWallInfo(ws);
         Serial.println("--------------------");
         delay(100);
-        rotateToAngle(turner, 90.0);
+        rotateToAngle(90.0);
         delay(100);
-        rotateToAngle(turner, 90.0);
-        ws = driveStraightUntilLine(turner, ws, LEFT);
+        rotateToAngle(90.0);
+        ws = driveStraightUntilLine(ws, LEFT);
         delay(100);
-        rotateToAngle(turner, -90.0);
-        driveStraightFor(turner, 300);
+        rotateToAngle(-90.0);
+        driveForwardFor(400);
         delay(100);
     }
 
