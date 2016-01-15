@@ -125,16 +125,6 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
 
 WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
-    Serial.println("----------------");
-    switch (driveDir)
-    {
-        case LEFT:
-            Serial.println("Facing Left");
-            break;
-
-        case RIGHT:
-            Serial.println("Facing Right");
-    }
     Serial.println("Begin driveStraightUntilLine");
     printWallInfo(wallInfo);
 
@@ -156,12 +146,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
     while (!wallDriveFinihsed)
     {
         sensorArray.readCalibrated(sensorValues);
-        // for (byte i = 0; i < 6; i++)
-        // {
-        //   Serial.print(sensorValues[i]);
-        //   Serial.print(' ');
-        // }
-        // Serial.println();
         wallDriveFinihsed = ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) ||
                        (sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE));
 
@@ -221,7 +205,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
         Serial.println("Corrections complete");
     }
 
-    Serial.println("----------------\n\n\n");
     return response;
 }
 
@@ -249,12 +232,6 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
     while (!correctingFinished)
     {
         sensorArray.readCalibrated(sensorValues);
-        // for (byte i = 0; i < 6; i++)
-        // {
-        //   Serial.print(sensorValues[i]);
-        //   Serial.print(' ');
-        // }
-        // Serial.println();
 
         // Check if both sensors on the array have reached the wall- making the correction complete
         if ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
@@ -271,15 +248,6 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
             correctingFinished = true;
             // set the response to say that we've hit a full wall
             setWallInfo(driveDir, &response, WS_FULL_WALL);
-            // Serial.print("dt ");
-            // Serial.println(diffTime);
-            // Serial.print("tct ");
-            // Serial.println(totalCorrectionTime);
-            // Serial.print("nc ");
-            // Serial.println(numCorrections);
-            // Serial.print("act ");
-            // Serial.println(averageCorrectionTime);
-
         }
         else if ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
         (sensorValues[RIGHT_IR_SNSR] < THRESHOLD_ON_LINE))
