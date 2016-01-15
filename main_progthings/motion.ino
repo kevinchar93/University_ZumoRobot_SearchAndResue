@@ -56,7 +56,7 @@ void rotateToAngle(float angle)
     }
 }
 
-WALL_INFO driveForwardFor (unsigned long durationMs)
+WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, WALL_INFO wallInfo)
 {
     int16_t targetAngle, power, error, speedDifference;
     int16_t rightSpeed, leftSpeed;
@@ -70,6 +70,7 @@ WALL_INFO driveForwardFor (unsigned long durationMs)
     const uint16_t proportion = 12;
     const float integral = 0.5;
 
+    WALL_INFO response = wallInfo;
 
     turner.reset();
     turner.update();
@@ -95,6 +96,9 @@ WALL_INFO driveForwardFor (unsigned long durationMs)
         {
             leftSpeed = 0;
             rightSpeed = 0;
+
+            // No wall detected ahead set wall info
+            setWallInfo(driveDir, &response, WS_NO_WALL_AHEAD);
         }
 
         // Check if we've hit a line in front , if so stop the bot
@@ -109,9 +113,14 @@ WALL_INFO driveForwardFor (unsigned long durationMs)
             rightSpeed = 0;
             timedOut = true;
             reverseCorrectionNeeded = true;
+
+            // Wall detected in front of the bot
+            setWallInfo(driveDir, &response, WS_WALL_AHEAD);
         }
         ZumoMotors::setSpeeds(leftSpeed,rightSpeed);
     }
+
+    return response;
 }
 
 WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
