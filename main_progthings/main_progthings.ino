@@ -43,7 +43,6 @@ unsigned int sensorValues[NUM_SENSORS];
 WALL_INFO ws;
 
 WALL_INFO currWallInfo;
-WALL_INFO prevWallInfo;
 
 POSITION_ESTIMATE currPosEstimate;
 
@@ -70,10 +69,6 @@ void setup()
     currWallInfo.lastRightWall      = WS_NIL;
     currWallInfo.lastForwardWall    = WS_NIL;
 
-    prevWallInfo.lastLeftWall       = WS_NIL;
-    prevWallInfo.lastRightWall      = WS_NIL;
-    prevWallInfo.lastForwardWall    = WS_NIL;
-
     // Init the position estimates
     currPosEstimate = PE_AT_START;
     currPosEstimate = PE_AT_START;
@@ -82,9 +77,6 @@ void setup()
 
 void loop()
 {
-    // We are about to update the current wall information, save the previous info
-    prevWallInfo = currWallInfo;
-
     switch (currPosEstimate)
     {
         case PE_CORRIDOOR:
@@ -159,7 +151,7 @@ void loop()
             break;
     }
 
-    currPosEstimate = estimatePosition(currWallInfo, prevWallInfo);
+    currPosEstimate = estimatePosition(currWallInfo, currPosEstimate);
     delay(DELAY_TIME);
 }
 
@@ -278,7 +270,7 @@ void makeSirenNoise()
     }
 }
 
-POSITION_ESTIMATE estimatePosition (WALL_INFO currInfo, WALL_INFO prevInfo)
+POSITION_ESTIMATE estimatePosition (WALL_INFO currInfo, POSITION_ESTIMATE prevEstimate)
 {
     // Try to estimate what situation the robot is in based on the sensed wall info
     if ((currInfo.lastLeftWall == WS_NIL) &&
@@ -326,9 +318,7 @@ POSITION_ESTIMATE estimatePosition (WALL_INFO currInfo, WALL_INFO prevInfo)
     if ((currInfo.lastLeftWall == WS_FULL_WALL || currInfo.lastLeftWall == WS_PARTIAL_WALL) &&
         (currInfo.lastRightWall == WS_NO_WALL) &&
         (currInfo.lastForwardWall == WS_NO_WALL_AHEAD) &&
-        (prevInfo.lastLeftWall == WS_FULL_WALL || currInfo.lastLeftWall == WS_PARTIAL_WALL) &&
-        (prevInfo.lastRightWall == WS_NO_WALL) &&
-        (prevInfo.lastForwardWall == WS_NO_WALL_AHEAD))
+        (prevEstimate == PE_PARTIAL_RIGHT || prevEstimate == PE_RIGHT_ROOM))
     {
         return PE_RIGHT_ROOM;
     }
@@ -336,9 +326,7 @@ POSITION_ESTIMATE estimatePosition (WALL_INFO currInfo, WALL_INFO prevInfo)
     if ((currInfo.lastRightWall == WS_FULL_WALL || currInfo.lastRightWall == WS_PARTIAL_WALL) &&
         (currInfo.lastLeftWall == WS_NO_WALL) &&
         (currInfo.lastForwardWall == WS_NO_WALL_AHEAD) &&
-        (prevInfo.lastRightWall == WS_FULL_WALL || currInfo.lastRightWall == WS_PARTIAL_WALL) &&
-        (prevInfo.lastLeftWall == WS_NO_WALL) &&
-        (prevInfo.lastForwardWall == WS_NO_WALL_AHEAD))
+        (prevEstimate == PE_PARTIAL_LEFT || prevEstimate == PE_LEFT_ROOM))
     {
         return PE_LEFT_ROOM;
     }
