@@ -11,15 +11,23 @@
 #define UP_BOUND_ROT 1.0
 #define LOW_BOUND_ROT -1.0
 
-#define TOP_SPEED 150
+
 #define MIN_SPEED 0
 
+#define PING_SPEED 100
 
-void rotateToAngle(float angle)
+#define TRIG 2
+#define ECHO 6
+#define MAX_DISTANCE 30
+
+bool rotateToAngle(float angle, bool sweepForObject, int topSpeed)
 {
     PIDController rotationPID = PIDController((float) 6.5, (float) 0.001, (float) 0.0);
     float error, motorSpeed, targetAngle, currentHeading;
     bool keepLooping = true;
+    bool objectFound = false;
+    NewPing ping(TRIG, ECHO, MAX_DISTANCE);
+    ZumoBuzzer buzzer;
 
     turner.reset();
     turner.update();
@@ -33,14 +41,24 @@ void rotateToAngle(float angle)
         motorSpeed = rotationPID.calculate(fabs(error));
         keepLooping = !(Utilities::inRange(fabs(error), LOW_BOUND_ROT, UP_BOUND_ROT));
 
+        if (sweepForObject && !objectFound)
+        {
+            if(ping.ping_cm() > 0)
+            {
+                objectFound = true;
+                buzzer.playFrequency(500, 10, 15);
+                buzzer.playFrequency(600, 10, 15);
+            }
+        }
+
         if (false == keepLooping)
         {
             motorSpeed = 0;
         }
 
-        if (motorSpeed > TOP_SPEED)
+        if (motorSpeed > topSpeed)
         {
-            motorSpeed = TOP_SPEED;
+            motorSpeed = topSpeed;
         }
 
         if (error > 0)
@@ -54,6 +72,9 @@ void rotateToAngle(float angle)
             ZumoMotors::setSpeeds(-motorSpeed, motorSpeed);
         }
     }
+
+    delay(100);
+    return objectFound;
 }
 
 WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, WALL_INFO wallInfo)
@@ -125,8 +146,8 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
 
 WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
-    Serial.println("Begin driveStraightUntilLine");
-    printWallInfo(wallInfo);
+    // Serial.println("Begin driveStraightUntilLine");
+    // printWallInfo(wallInfo);
 
     bool wallDriveFinihsed = false;
     bool correctingFinished = false;
@@ -169,7 +190,7 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 
             // set the response to say we've hit a wall - we may or may not have hit it correctly
             setWallInfo(driveDir, &response, WS_HIT_WALL);
-            Serial.println("Hit a wall");
+            // Serial.println("Hit a wall");
         }
         // if the last time we were at this side of the corridor we sensed a partial wall
         // or no wall at all, initiate a time out so we don't drive off into free space forever
@@ -180,7 +201,7 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
             if ((millis() - initWallDriveTime) > (averageWallDriveTime * 2.5))
             {
                 ZumoMotors::setSpeeds(0, 0);
-                Serial.println("No wall reached");
+                // Serial.println("No wall reached");
                 // set the response to say that we haven't reached a wall and free space has been
                 // detected, potential room or corridoor
                 setWallInfo(driveDir, &response, WS_NO_WALL);
@@ -190,7 +211,7 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
         ZumoMotors::setSpeeds(lSpeed, rSpeed);
     }
 
-    Serial.println("Reached line");
+    // Serial.println("Reached line");
 
    // This checks to see if both sensors on the edge of the sensor array have reached a wall
     sensorArray.readCalibrated(sensorValues);
@@ -200,10 +221,12 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 
     if (!correctingFinished)
     {
-        Serial.println("Performing corrections line");
+        // Serial.println("Performing corrections line");
         response = performCorrections(wallInfo, driveDir);
-        Serial.println("Corrections complete");
+        // Serial.println("Corrections complete");
     }
+
+    delay(50);
 
     return response;
 }
@@ -219,7 +242,7 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
    */
 WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
-    Serial.println("Begin performCorrections");
+    // Serial.println("Begin performCorrections");
 
     bool correctingFinished = false;
     uint16_t lSpeed = 50;
@@ -295,7 +318,7 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 
         if (timeOutCheck)
         {
-            if ((millis() - initCorrectionTime > (averageCorrectionTime * 1.5)) && (numCorrections >= 8))
+            if ((millis() - initCorrectionTime > (averageCorrectionTime * 2)) && (numCorrections >= 8))
             {
                 /* It is possible for a correction to take longer than usual and the robot not be near a
                    partial wall, we need to check this by looking at the sensors on the edge of the sensor
@@ -310,7 +333,7 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
                     // set the wall info to say that we've hit a partial wall, precursor to
                     // either a room or corridor
                     setWallInfo(driveDir, &response, WS_PARTIAL_WALL);
-                    Serial.println("Correction time out");
+                    // Serial.println("Correction time out");
                 }
                 else if ((sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
                         (sensorValues[LEFT_IR_SNSR] <= THRESHOLD_NEAR_LINE))
@@ -319,7 +342,7 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
                     rSpeed = 0;
                     correctingFinished = true;
                     setWallInfo(driveDir, &response, WS_PARTIAL_WALL);
-                    Serial.println("Correction time out");
+                    // Serial.println("Correction time out");
                 }
             }
         }
