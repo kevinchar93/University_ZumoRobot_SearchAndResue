@@ -73,7 +73,7 @@ bool rotateToAngle(float angle, bool sweepForObject, int topSpeed)
         }
     }
 
-    delay(100);
+    //delay(100);
     return objectFound;
 }
 
@@ -141,7 +141,61 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
         ZumoMotors::setSpeeds(leftSpeed,rightSpeed);
     }
 
+    if(reverseCorrectionNeeded)
+    {
+        // perfrom reverse corrections
+        perfromReverseCorrections();
+    }
+
     return response;
+}
+
+void perfromReverseCorrections()
+{
+    bool correctingFinished = false;
+    uint16_t lSpeed = -50;
+    uint16_t rSpeed = -50;
+
+    while (!correctingFinished)
+    {
+        sensorArray.readCalibrated(sensorValues);
+
+        // Check if both sensors on the array have come off the wall
+        if ((sensorValues[LEFT_IR_SNSR] < THRESHOLD_NEAR_LINE) &&
+        (sensorValues[RIGHT_IR_SNSR] < THRESHOLD_NEAR_LINE))
+        {
+            rSpeed = 0;
+            lSpeed = 0;
+            correctingFinished = true;
+        }
+        else if ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_NEAR_LINE) &&
+        (sensorValues[RIGHT_IR_SNSR] < THRESHOLD_NEAR_LINE))
+        {
+            // The right sensor has not reached the wall but the left has, adjust right track
+            lSpeed = -80;
+            rSpeed = 0;
+        }
+        else if ((sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_NEAR_LINE) &&
+        (sensorValues[LEFT_IR_SNSR] < THRESHOLD_NEAR_LINE))
+        {
+            // The right sensor has not reached the wall but the left has, adjust right track
+            lSpeed = 0;
+            rSpeed = -80;
+        }
+        else
+        {
+            // None of the scenarios above apply (but we are close), move the robot forward slowly until one fits
+            lSpeed = -50;
+            rSpeed = -50;
+        }
+
+        ZumoMotors::setSpeeds(lSpeed, rSpeed);
+    }
+
+    delay(150);
+    ZumoMotors::setSpeeds(-50, -50);
+    delay(100);
+    ZumoMotors::setSpeeds(0, 0);
 }
 
 WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
@@ -169,8 +223,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
         sensorArray.readCalibrated(sensorValues);
         wallDriveFinihsed = ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) ||
                        (sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE));
-
-
 
        if(wallDriveFinihsed)
         {
@@ -349,6 +401,8 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
         ZumoMotors::setSpeeds(lSpeed,rSpeed);
     }
 
+    // Delay to make motion less abrupt
+    delay(50);
     return response;
 }
 

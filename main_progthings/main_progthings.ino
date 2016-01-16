@@ -23,6 +23,7 @@
 #define SOUND_BUTTON_CLICK ">g32>>c32>e32>>d32"
 
 #define TOP_SPEED 150
+#define DRIVE_STRAIGHT_SPEED 100
 
 ZumoReflectanceSensorArray sensorArray;
 ZumoMotors motors;
@@ -87,16 +88,18 @@ void loop()
 
         case PE_PARTIAL_LEFT:
             Serial.println("Partial wall to the left\n\n");
-            moveAndSearch(DRIVE_FORWARD_TIME);
+            moveAndSearch(DRIVE_FORWARD_TIME+400);
+            roomSearched = false;
             break;
         case PE_PARTIAL_RIGHT:
             Serial.println("Partial wall to the right\n\n");
-            moveAndSearch(DRIVE_FORWARD_TIME);
+            moveAndSearch(DRIVE_FORWARD_TIME+400 );
+            roomSearched = false;
             break;
 
         case PE_UNCERTAIN:
             Serial.println("Uncertain of position\n\n");
-            moveAndSearch(DRIVE_FORWARD_TIME+50);
+            moveAndSearch(DRIVE_FORWARD_TIME);
             roomSearched = false;
             break;
 
@@ -107,13 +110,11 @@ void loop()
             break;
 
         case PE_RIGHT_ROOM:
-            Serial.println("In Right Room\n\n");
             moveAndSearchRightRoom();
             roomSearched = true;
             break;
 
         case PE_LEFT_ROOM:
-            Serial.println("In Left Room\n\n");
             moveAndSearchLeftRoom();
             roomSearched = true;
             break;
@@ -121,28 +122,19 @@ void loop()
         case PE_RIGHT_CORNER:
             Serial.println("Taking Right Corner\n\n");
             rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
-            moveAndSearch(DRIVE_FORWARD_TIME + 100);
+            moveAndSearch(DRIVE_FORWARD_TIME + 450);
             roomSearched = false;
             break;
 
         case PE_LEFT_CORNER:
             Serial.println("Taking Left Corner\n\n");
             rotateToAngle(LEFT_TURN_90_DEG, false, TOP_SPEED);
-            moveAndSearch(DRIVE_FORWARD_TIME + 100);
+            moveAndSearch(DRIVE_FORWARD_TIME + 450);
             roomSearched = false;
             break;
 
         case PE_END_OF_MAZE:
             Serial.println("Reach end of Maze Turning Around\n\n");
-
-            // Reset Averages
-            averageCorrectionTime = 0;
-            totalCorrectionTime = 0;
-            numCorrections = 0;
-
-            averageWallDriveTime = 0;
-            totalWallDriveTime = 0;
-            numWallDrives = 0;
 
             rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
             rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
@@ -186,9 +178,9 @@ void moveAndSearchRightRoom ()
     rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
     currWallInfo = driveStraightUntilLine(currWallInfo, RIGHT);
 
-    if(false == roomSearched)
+    if(false == roomSearched && currWallInfo.lastForwardWall == WS_NO_WALL_AHEAD)
     {
-        // search the room
+        // search the room with sensor
         sweep1 = rotateToAngle(RIGHT_TURN_90_DEG, true, 100);
         sweep2 = rotateToAngle(LEFT_TURN_90_DEG, true, 100);
         sweep3 = rotateToAngle(LEFT_TURN_90_DEG, true, 100);
@@ -205,9 +197,14 @@ void moveAndSearchRightRoom ()
         rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
     }
 
+    if (currWallInfo.lastForwardWall == WS_NO_WALL_AHEAD)
+    {
+        Serial.println("In Right Room\n\n");
+    }
+
     if (sweep1 || sweep2 || sweep3)
     {
-        Serial.println("There is a person in the Room!");
+        Serial.println("*** There is a person in the Room! ***");
         makeSirenNoise();
     }
 
@@ -224,9 +221,9 @@ void moveAndSearchLeftRoom ()
     rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
     currWallInfo = driveStraightUntilLine(currWallInfo, RIGHT);
 
-    if(false == roomSearched)
+    if(false == roomSearched && currWallInfo.lastForwardWall == WS_NO_WALL_AHEAD)
     {
-        // search the room
+        // search the room with sensor
         rotateToAngle(LEFT_TURN_90_DEG, false, TOP_SPEED);
         rotateToAngle(LEFT_TURN_90_DEG, false, TOP_SPEED);
         currWallInfo = driveStraightUntilLine(currWallInfo, LEFT);
@@ -243,9 +240,14 @@ void moveAndSearchLeftRoom ()
         rotateToAngle(RIGHT_TURN_90_DEG, false, TOP_SPEED);
     }
 
+    if (currWallInfo.lastForwardWall == WS_NO_WALL_AHEAD)
+    {
+        Serial.println("In Left Room\n\n");
+    }
+
     if (sweep1 || sweep2 || sweep3)
     {
-        Serial.println("There is a person in the Room!");
+        Serial.println("*** There is a person in the Room! ***");
         makeSirenNoise();
     }
 }
