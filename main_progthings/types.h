@@ -1,15 +1,17 @@
+/* Enums defining all the possible types of wall that can be sensed by the reflectance
+   sensor array in from of the robot */
 typedef enum _WALL_SENSE
 {
-    WS_NIL,             // 0
-    WS_FULL_WALL,       // 1
-    WS_PARTIAL_WALL,    // 2
-    WS_NO_WALL,         // 3
-    WS_NO_WALL_AHEAD,   // 4
-    WS_HIT_WALL,        // 5
-    WS_WALL_AHEAD,      // 6
+    WS_NIL,
+    WS_FULL_WALL,
+    WS_PARTIAL_WALL,
+    WS_NO_WALL,
+    WS_NO_WALL_AHEAD,
+    WS_HIT_WALL,
+    WS_WALL_AHEAD,
 } WALL_SENSE;
 
-
+/* Enums describing all the directions the robot can face during operation */
 typedef enum _DRIVE_DIRECTION
 {
     LEFT,
@@ -17,6 +19,7 @@ typedef enum _DRIVE_DIRECTION
     FORWARD,
 } DRIVE_DIRECTION;
 
+/* A struct used to store information about the robots current surroundings */
 typedef struct _WALL_INFO
 {
     WALL_SENSE lastLeftWall;
@@ -24,6 +27,8 @@ typedef struct _WALL_INFO
     WALL_SENSE lastForwardWall;
 } WALL_INFO;
 
+/* A type used to represent all the possible places that are in the map
+   that the robot could possibly be in */
 typedef enum _POSITION_ESTIMATE
 {
     PE_NIL,

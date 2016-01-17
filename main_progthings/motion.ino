@@ -4,79 +4,101 @@
 #define ROT_INTEGRAL 0.001
 #define ROT_DIRIVATIVE 0.0
 
-#define PID_DIRECT 0
-#define PID_REVERSE 1
-#define SAMPLE_TIME 100
-
 #define UP_BOUND_ROT 1.0
 #define LOW_BOUND_ROT -1.0
-
-
-#define MIN_SPEED 0
-
-#define PING_SPEED 100
 
 #define TRIG 2
 #define ECHO 6
 #define MAX_DISTANCE 30
 
+/* Function is used to rortate the robot to a specified angle can be told to scan for objects
+   while rotating with the ultrasonic sensor and the speed of the rotation can be set */
 bool rotateToAngle(float angle, bool sweepForObject, int topSpeed)
 {
+    // Initialise PID controller tyes with 6.5 proportion, 0.001 integral to control the rotation of the bot
     PIDController rotationPID = PIDController((float) 6.5, (float) 0.001, (float) 0.0);
+
     float error, motorSpeed, targetAngle, currentHeading;
     bool keepLooping = true;
     bool objectFound = false;
     NewPing ping(TRIG, ECHO, MAX_DISTANCE);
     ZumoBuzzer buzzer;
 
+    // Reset the gyro sensor to 0 then tell it to update the stored current heading
     turner.reset();
     turner.update();
+
+    // Get the current heading and use it to calculate what the target angle should be
     currentHeading = turner.getCurrentHeading();
+
+    // the wrap functions ensures it is within the range -180 - 180 and wraps it
+    // accoordingly if the target angle is outside this threadhold
     targetAngle = Utilities::wrapAngle(currentHeading + angle);
 
     while (keepLooping)
     {
+        // update the stored current heading
         turner.update();
+
+        // use current heading to see how far off from the target angle we are (wrap the error value if neccessary)
         error = Utilities::wrapAngle( turner.getCurrentHeading() - targetAngle);
+
+        // use the error value and a PID algorithm to calculate what the current spin speed shoudl be
         motorSpeed = rotationPID.calculate(fabs(error));
+
+        // check to see if we are within 1+- degree of the target angle if so, we stop rotation
         keepLooping = !(Utilities::inRange(fabs(error), LOW_BOUND_ROT, UP_BOUND_ROT));
 
+        // if the function has been instructed to sweep for objects then do so
         if (sweepForObject && !objectFound)
         {
             if(ping.ping_cm() > 0)
             {
                 objectFound = true;
+
+                // play 2 frequencies if anything is detected
                 buzzer.playFrequency(500, 10, 15);
                 buzzer.playFrequency(600, 10, 15);
             }
         }
 
+        // if we have finished set the motorSpeed to zero
         if (false == keepLooping)
         {
             motorSpeed = 0;
         }
 
+        // if the speed calculated by the PID algorithm exceed the maximum speed that
+        // we are allowed then constrain it
         if (motorSpeed > topSpeed)
         {
             motorSpeed = topSpeed;
         }
 
+        // use the error value to determine which is the shorted way to spin to reach the target angle
         if (error > 0)
         {
+            // if the error is positive spin clockwise
                             // left speed, right speed
             ZumoMotors::setSpeeds(motorSpeed, -motorSpeed);
         }
         else
         {
+            // if the error is negative spin counter clockwise
                             // left speed, right speed
             ZumoMotors::setSpeeds(-motorSpeed, motorSpeed);
         }
     }
 
-    //delay(100);
+    // value that we return indicates if an object was detected while we were rotating
     return objectFound;
 }
 
+/* This function is used to drive the robot in a fairly straight line forward using the gyro and PID control
+   to stay straight, we can specify how long to drive forward for in milliseconds, the function returns information
+   about what it sensed if fornt of it, either a wall or no wall.
+
+   The function will terminate if the timeout occurs or it hits a wall in front of the robot */
 WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, WALL_INFO wallInfo)
 {
     int16_t targetAngle, power, error, speedDifference;
@@ -91,22 +113,38 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
     const uint16_t proportion = 12;
     const float integral = 0.5;
 
+    // this is used to store what we have deteted while driving forward
     WALL_INFO response = wallInfo;
 
+    // Reset the gyro sensor to 0 then tell it to update the stored current heading
     turner.reset();
     turner.update();
+
+    // store the current heading (which should be 0) as the target angle,  since we want to dirve in a straight line
     targetAngle = turner.getCurrentHeading();
+
+    // we will use the time that the function started to detect if we have timed out */
     initTime = millis();
 
+    // keep driving forward until a time out or a wall is hit it front
     while (!timedOut)
     {
+        // update the stored current heading
         turner.update();
+
+        // calculate the ammount of error from the target angle (wrap it into -180-180 if need be)
         error = Utilities::wrapAngle( turner.getCurrentHeading() - targetAngle);
+
+        // calculate the difference in speeds for each wheel using the simple Proportion integral algorithm
+        // proportion constant of 12 and integral constant of 0.5
         speedDifference = (error * proportion) + ((int)(error * integral));
 
+        // use the speedDifference to calculate the individual speed for each wheel, the sign of speedDifference
+        // determines wether the robot will turn to the left or right
         leftSpeed = straightSpeed + speedDifference;
         rightSpeed = straightSpeed - speedDifference;
 
+        // make sure that the speed of each wheel does not exceed the maximum set
         leftSpeed = constrain(leftSpeed, 0, (int16_t)straightSpeed);
         rightSpeed = constrain(rightSpeed, 0, (int16_t)straightSpeed);
 
@@ -115,6 +153,7 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
 
         if (timedOut)
         {
+            // we have times out to set speed to zero
             leftSpeed = 0;
             rightSpeed = 0;
 
@@ -127,29 +166,35 @@ WALL_INFO driveForwardFor (unsigned long durationMs, DRIVE_DIRECTION driveDir, W
         frontLineDetected = ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
                        (sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE));
 
-
         if (frontLineDetected)
         {
+            // a wall was detected in front of the robot, stop the robot and store that we have sensed this wall
             leftSpeed = 0;
             rightSpeed = 0;
             timedOut = true;
             reverseCorrectionNeeded = true;
 
-            // Wall detected in front of the bot
+            // Wall detected in front of the bot, store this information
             setWallInfo(driveDir, &response, WS_WALL_AHEAD);
         }
         ZumoMotors::setSpeeds(leftSpeed,rightSpeed);
     }
 
+
     if(reverseCorrectionNeeded)
     {
-        // perfrom reverse corrections
+        // perfrom reverse corrections, reverse the robot off the line it detected and move
+        // the bot so that it is parallel with the wall detected in front
         perfromReverseCorrections();
     }
 
+    // return information about what we have sensed
     return response;
 }
 
+/* This is called after the after the robot hit a wall infront of it, it is probable that the robot did not hit the line
+   straight on and may be miss aligned with it, the functions reverses the robot off the line until the robot is parallel
+   with the line it drove into */
 void perfromReverseCorrections()
 {
     bool correctingFinished = false;
@@ -160,7 +205,7 @@ void perfromReverseCorrections()
     {
         sensorArray.readCalibrated(sensorValues);
 
-        // Check if both sensors on the array have come off the wall
+        // Check if both edge sensors on the array have come off the wall
         if ((sensorValues[LEFT_IR_SNSR] < THRESHOLD_NEAR_LINE) &&
         (sensorValues[RIGHT_IR_SNSR] < THRESHOLD_NEAR_LINE))
         {
@@ -171,20 +216,20 @@ void perfromReverseCorrections()
         else if ((sensorValues[LEFT_IR_SNSR] >= THRESHOLD_NEAR_LINE) &&
         (sensorValues[RIGHT_IR_SNSR] < THRESHOLD_NEAR_LINE))
         {
-            // The right sensor has not reached the wall but the left has, adjust right track
+            // the left sensor is still on the wall but the right sensor is off it, adjust left track
             lSpeed = -80;
             rSpeed = 0;
         }
         else if ((sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_NEAR_LINE) &&
         (sensorValues[LEFT_IR_SNSR] < THRESHOLD_NEAR_LINE))
         {
-            // The right sensor has not reached the wall but the left has, adjust right track
+            // The right sensor is still on the wall but the left sensor is off it, adjust the right track
             lSpeed = 0;
             rSpeed = -80;
         }
         else
         {
-            // None of the scenarios above apply (but we are close), move the robot forward slowly until one fits
+            // None of the scenarios above apply (but we are close), move the robot backwards slowly until one fits
             lSpeed = -50;
             rSpeed = -50;
         }
@@ -192,6 +237,9 @@ void perfromReverseCorrections()
         ZumoMotors::setSpeeds(lSpeed, rSpeed);
     }
 
+    // once we have corrected, reverse the robot slowly for 100 milliseconds
+    // this is do we are not too close to the wall when we perfrom further movement
+    // particularly when taking a corner or spinning around at the end of the corridor
     delay(150);
     ZumoMotors::setSpeeds(-50, -50);
     delay(100);
@@ -233,7 +281,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
             // add the time it took to get back to the other wall, this would mess up our averages!
             if ((wallInfo.lastRightWall != WS_NO_WALL) && (wallInfo.lastLeftWall != WS_NO_WALL))
             {
-                // Serial.println("calculate avarage");
                 diffTime = millis() - initWallDriveTime;
                 totalWallDriveTime += diffTime;
                 numWallDrives++;
@@ -242,7 +289,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 
             // set the response to say we've hit a wall - we may or may not have hit it correctly
             setWallInfo(driveDir, &response, WS_HIT_WALL);
-            // Serial.println("Hit a wall");
         }
         // if the last time we were at this side of the corridor we sensed a partial wall
         // or no wall at all, initiate a time out so we don't drive off into free space forever
@@ -253,17 +299,14 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
             if ((millis() - initWallDriveTime) > (averageWallDriveTime * 2.5))
             {
                 ZumoMotors::setSpeeds(0, 0);
-                // Serial.println("No wall reached");
                 // set the response to say that we haven't reached a wall and free space has been
-                // detected, potential room or corridoor
+                // detected, it is potentially a room or corridoor
                 setWallInfo(driveDir, &response, WS_NO_WALL);
                 return response;
             }
         }
         ZumoMotors::setSpeeds(lSpeed, rSpeed);
     }
-
-    // Serial.println("Reached line");
 
    // This checks to see if both sensors on the edge of the sensor array have reached a wall
     sensorArray.readCalibrated(sensorValues);
@@ -273,9 +316,8 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 
     if (!correctingFinished)
     {
-        // Serial.println("Performing corrections line");
+        // perform correction to ensure that the robot is parallel with the target wall
         response = performCorrections(wallInfo, driveDir);
-        // Serial.println("Corrections complete");
     }
 
     delay(50);
@@ -286,7 +328,7 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 /* Even though we have reached the target wall it is probable that the robots turn was off
    by a few degrees, this needs to be corrected so that it does not drift on future
    turns. We can use the sensors on opposite ends of the sensor array to determine if
-   the robot is lined up with the target wall. If we drive straight at the target wall
+   the robot is parallel with the target wall. If we drive straight at the target wall
    both sensors should say they have reached it, if not we can move the corresponding
    track to straighten the robot up
 
@@ -294,8 +336,6 @@ WALL_INFO driveStraightUntilLine (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
    */
 WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
 {
-    // Serial.println("Begin performCorrections");
-
     bool correctingFinished = false;
     uint16_t lSpeed = 50;
     uint16_t rSpeed = 50;
@@ -385,7 +425,6 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
                     // set the wall info to say that we've hit a partial wall, precursor to
                     // either a room or corridor
                     setWallInfo(driveDir, &response, WS_PARTIAL_WALL);
-                    // Serial.println("Correction time out");
                 }
                 else if ((sensorValues[RIGHT_IR_SNSR] >= THRESHOLD_ON_LINE) &&
                         (sensorValues[LEFT_IR_SNSR] <= THRESHOLD_NEAR_LINE))
@@ -394,7 +433,6 @@ WALL_INFO performCorrections (WALL_INFO wallInfo, DRIVE_DIRECTION driveDir)
                     rSpeed = 0;
                     correctingFinished = true;
                     setWallInfo(driveDir, &response, WS_PARTIAL_WALL);
-                    // Serial.println("Correction time out");
                 }
             }
         }
@@ -442,6 +480,7 @@ void printWallInfo (WALL_INFO info)
 
 }
 
+// For debug
 const char* wallSenseToStr (WALL_SENSE sense)
 {
     switch (sense)
