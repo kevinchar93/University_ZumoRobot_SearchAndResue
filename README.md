@@ -178,3 +178,9 @@ My robot makes use of libraries and ideas from three sources, Pololu the robot
 manufacturer , Texas Instruments, who had interns that wrote libraries for working
 with the Zumo robot using TI hardware / Energia and Tim Eckel the developer of the
 NewPing library. See the [Report](https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/Report.pdf) for details.
+
+## License
+
+Copyright © 2016 Kevin Charles
+
+Distributed under the MIT License
