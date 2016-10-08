@@ -13,7 +13,7 @@ The ‘building’ consist of a corridor with corners and adjoining rooms. The b
 ## Video of Robot in Action
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=9lQy158vBtM
 " target="_blank"><img src="http://img.youtube.com/vi/9lQy158vBtM/0.jpg" 
-alt="IMAGE ALT TEXT HERE" width="640" height="400" border="10" /></a>
+alt="Zumo Robot in Maze" width="640" height="400" border="10" /></a>
 
 ## Quick Operation Overview
 The way in which my robot completes the course, is by building up an “image” of its
@@ -31,8 +31,24 @@ right corner, end of maze.
 The estimate is then used to decide what to do next, this table specifies how the
 robot acts with a given position estimate.
 
+| Positon Estimate          | Behaviour                                                                                                                                               |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| In Corridoor              | Move forward and search, then turn and search left and right for walls                                                                                  |
+| In Right Room             | If the room hasn’t been searched move into the room and search it for people                                                                            |
+| In Left Room              | If the room hasn’t been searched move into the room and search it for people                                                                            |
+| In Right Corner           | Turn right then continue as normal move forward and search left / right                                                                                 |
+| In Left Corner            | Turn left then continue as normal move forward and search left / right                                                                                  |
+| End of Maze               | Turn the robot around 180 degrees and do the maze in reverse                                                                                            |
+| Partial wall on the left  | Move twice as far forward as normal to get past the partial wall quicker, then search left / right as normal                                            |
+| Partial wall on the right | Move twice as far forward as normal to get past the partial wall quicker, then search left / right as normal                                            |
+| Uncertain of position     | Continue as normal, move forward and search left right, hopefully we will get enough sensory data to have a firm position estimate on the next movement |
+| At the start              | Move forward and search left and right as normal.                                                                                                       |
+With these estimates the robot is fully equipped with instructions of how to handle
+each situation it may encounter in the maze ­ fulfilling its job of going through the
+entire maze and finding people in rooms.
+
 ## Acknowledgement and Sources
 My robot makes use of libraries and ideas from three sources, Pololu the robot
 manufacturer , Texas Instruments, who had interns who wrote libraries for working
 with the Zumo robot using TI hardware / Energia and Tim Eckel the developer of the
-NewPing library.
+NewPing library. See the [Report](https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/Report.pdf) for details.
