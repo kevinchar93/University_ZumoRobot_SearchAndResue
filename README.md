@@ -8,8 +8,6 @@ For the Zumo this meant that we needed to make use of its line sensor (to stay w
 
 The ‘building’ consist of a corridor with corners and adjoining rooms. The boarders of the building are set out with black lines on a white background. The diagram below gives an example of a building layout.
 
-![Building Examle](https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/building_example_2.png "")
-
 <p align="center">
 <img src="https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/building_example_2.png" 
 alt="An example building layout" width="704" height="366" border="10" />
