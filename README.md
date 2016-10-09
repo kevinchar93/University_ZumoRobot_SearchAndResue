@@ -8,12 +8,19 @@ For the Zumo this meant that we needed to make use of its line sensor (to stay w
 
 The ‘building’ consist of a corridor with corners and adjoining rooms. The boarders of the building are set out with black lines on a white background. The diagram below gives an example of a building layout.
 
-![Building Examle](https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/building_example_2.png "An example building layout")
+![Building Examle](https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/building_example_2.png "")
+
+<p align="center">
+<img src="https://github.com/kevinchar93/University_ZumoRobot_SearchAndResue/blob/master/building_example_2.png" 
+alt="An example building layout" width="704" height="366" border="10" />
+</p>
 
 ## Video of Robot in Action
+<p align="center">
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=9lQy158vBtM
 " target="_blank"><img src="http://img.youtube.com/vi/9lQy158vBtM/0.jpg" 
 alt="Zumo Robot in Maze" width="640" height="400" border="10" /></a>
+</p>
 
 ## Quick Operation Overview
 The way in which my robot completes the course, is by building up an “image” of its
