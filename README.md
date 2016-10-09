@@ -47,7 +47,7 @@ With these estimates the robot is fully equipped with instructions of how to han
 each situation it may encounter in the maze ­ fulfilling its job of going through the
 entire maze and finding people in rooms.
 
-##Key Issues
+##Key Issues / Challenges
 ###Staying within the walls: 
 This issue is key to being able to complete the course at
 all, originally I thought it would be best to make the robot zig zag hitting each wall
