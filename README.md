@@ -52,8 +52,8 @@ With these estimates the robot is fully equipped with instructions of how to han
 each situation it may encounter in the maze ­ fulfilling its job of going through the
 entire maze and finding people in rooms.
 
-##Key Issues / Challenges
-###Staying within the walls: 
+### Key Issues / Challenges
+#### Staying within the walls: 
 This issue is key to being able to complete the course at
 all, originally I thought it would be best to make the robot zig zag hitting each wall
 through the course until it detected rooms on either sides of the wall, but the problem
@@ -69,7 +69,7 @@ added benefit of allowing us to differentiate between different parts of the map
 surrounding the robot.
 
 
-###Turning Using the Gyro ​(motion.ino : rotateToAngle()​) ​: 
+#### Turning Using the Gyro ​(motion.ino : rotateToAngle()​) ​: 
 With my decision to turn the robot left and right to each of the surrounding walls, I needed a method to
 accurately rotate a given amount of degrees. Since this robot has no encoders it is
 impossible to accurately tell how much the wheels have spun in a given span of time,
@@ -91,7 +91,7 @@ until the current heading is within 1 degree of the target angle, stopping the
 robot spinning when it is.
 
 
-###Correcting the Robot after a turn: 
+#### Correcting the Robot after a turn: 
 After each turn that the robot makes it has the
 potential to be off by about 1 or 2 degrees, this makes the robot turn fairly accurately
 but over time these errors can accumulate with the result being the robot facing in an
@@ -111,7 +111,7 @@ orientation on each of its turns any errors that were created during a turn are 
 out, preventing them from accumulating and causing issues.
 
 
-###Detecting Partial Walls​: 
+#### Detecting Partial Walls​: 
 Implementing the correction feature described above
 allows the robot to stop accumulated errors from turns causing issues but it also
 creates a potential problem. Should the one of the reflectance sensors on the edge
@@ -126,7 +126,7 @@ that a partial wall has been detected. This prevents the robot from over correct
 and facing the wrong way.
 
 
-###Detecting Rooms and Corners: ​
+#### Detecting Rooms and Corners: ​
 To detect rooms and corners a similar timing
 feature as described above is used. It times how long on average it takes for the
 robot to encounter a wall after turning left or right and driving forward. Should the
@@ -146,7 +146,7 @@ wall it drove into when we perform further movement, particularly when taking
 corners or reaching the end of a corridor.
 
 
-###Detecting objects: ​
+#### Detecting objects: ​
 Once the robot has determined that it is in a room it checks to
 see if has searched the room by consulting a boolean flag “roomSearched”, the flag
 is reset to false when the robot is not in a room and true once it has scanned the
@@ -159,7 +159,7 @@ leaves the room then sounds a siren to signal that a person is found ­ it also 
 an Xbee message of this occurrence.
 
 
-###Driving Straight Using the Gyro ​(motion.ino : driveForwardFor()​): 
+#### Driving Straight Using the Gyro ​(motion.ino : driveForwardFor()​): 
 To move the robot forward through the course I needed functionality that could move the robot
 forward in a straight line without it drifting to the left and right, as we established
 earlier we cannot track the rotations made by each wheel as there are no encoders
